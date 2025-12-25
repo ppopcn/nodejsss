@@ -1,6 +1,7 @@
 const net = require('net');
 const crypto = require('crypto');
 const fs = require('fs');
+const https = require('https');
 
 class ShadowsocksServer {
   constructor(config) {
@@ -209,16 +210,74 @@ class ShadowsocksServer {
     });
   }
 
+  // 获取服务器公网IP
+  async getServerPublicIP() {
+    const services = [
+      'https://api.ipify.org',
+      'https://icanhazip.com',
+      'https://ipecho.net/plain'
+    ];
+
+    for (const service of services) {
+      try {
+        const ip = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('请求超时')), 5000);
+          
+          https.get(service, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+              clearTimeout(timeout);
+              resolve(data.trim());
+            });
+          }).on('error', (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
+        });
+        
+        // 验证IP格式
+        if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) {
+          return ip;
+        }
+      } catch (err) {
+        console.log(`IP服务 ${service} 失败: ${err.message}`);
+        continue;
+      }
+    }
+    
+    return null;
+  }
+
   // 启动服务器
-  start() {
+  async start() {
     const server = net.createServer((socket) => {
       this.handleConnection(socket);
     });
     
-    server.listen(this.port, '0.0.0.0', () => {
+    server.listen(this.port, '0.0.0.0', async () => {
       console.log(`✅ Shadowsocks 服务器启动成功`);
       console.log(`📡 监听端口: ${this.port}`);
       console.log(`🔐 加密方法: ${this.method}`);
+      
+      // 获取并显示公网IP
+      console.log(`🌐 正在获取公网IP...`);
+      const publicIP = await this.getServerPublicIP();
+      if (publicIP) {
+        console.log(`🌐 服务器公网IP: ${publicIP}`);
+        console.log(`📋 连接配置:`);
+        console.log(`   服务器: ${publicIP}`);
+        console.log(`   端口: ${this.port}`);
+        console.log(`   密码: ${this.password}`);
+        console.log(`   加密: ${this.method}`);
+      } else {
+        console.log(`🌐 服务器公网IP: 获取失败`);
+        console.log(`📋 连接配置:`);
+        console.log(`   服务器: [请手动获取公网IP]`);
+        console.log(`   端口: ${this.port}`);
+        console.log(`   密码: ${this.password}`);
+        console.log(`   加密: ${this.method}`);
+      }
     });
     
     server.on('error', (err) => {
@@ -234,7 +293,7 @@ class ShadowsocksServer {
 }
 
 // 主函数
-function main() {
+async function main() {
   try {
     // 从 config.json 读取配置
     const configData = fs.readFileSync('config.json', 'utf8');
@@ -247,7 +306,7 @@ function main() {
     console.log('========================');
     
     const server = new ShadowsocksServer(config);
-    server.start();
+    await server.start();
     
     // 优雅关闭
     process.on('SIGINT', () => {
