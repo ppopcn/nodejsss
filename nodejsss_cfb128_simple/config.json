@@ -1,0 +1,6 @@
+{
+  "port": 9907,
+  "password": "qwe123",
+  "method": "aes-128-cfb",
+  "timeout": 300
+}
