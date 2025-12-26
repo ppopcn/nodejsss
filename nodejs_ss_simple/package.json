@@ -1,0 +1,17 @@
+{
+  "name": "shadowsocks-server",
+  "version": "1.0.0",
+  "description": "Shadowsocks proxy server implementation in Node.js",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "build": "echo 'No build step required'"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": ["shadowsocks", "proxy", "socks5"],
+  "author": "",
+  "license": "MIT"
+}
