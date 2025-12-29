@@ -31,6 +31,13 @@ if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 }
 console.log(`使用手动设置的 UUID: ${UUID}`);
 
+// ================== 保活机制（适用于Koyeb等平台）==================
+function keepAlive() {
+  setInterval(() => {
+    console.log(`[KeepAlive] ${new Date().toISOString()} - Service running`);
+  }, 30000); // 每30秒输出一次，保持进程活跃
+}
+
 // ================== 内置定时器（北京时间 00:00 重启）==================
 function scheduleBeijingTimeMidnight(callback) {
   const now = new Date();
@@ -220,6 +227,9 @@ function runLoop() {
 // ================== 主流程 ==================
 async function main() {
   console.log("TUIC v5 over QUIC 自动部署开始");
+
+  // 0. 启动保活机制
+  keepAlive();
 
   // 1. 启动定时重启
   scheduleBeijingTimeMidnight(() => {
