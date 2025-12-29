@@ -9,7 +9,7 @@ function readPort() {
     console.log(`Using env port: ${process.env.SERVER_PORT}`);
     return Number(process.env.SERVER_PORT);
   }
-  const port = 8989;
+  const port = 8000;
   return port;
 }
 
