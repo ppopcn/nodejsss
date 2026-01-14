@@ -1,0 +1,16 @@
+{
+  "name": "mtproxy-node",
+  "version": "1.0.0",
+  "description": "MTProxy 自动部署脚本（Node.js 版）",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["mtproxy", "telegram", "proxy", "deploy", "nodejs"],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
