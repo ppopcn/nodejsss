@@ -1,40 +1,40 @@
 /**
  * Node.js SOCKS5 Proxy Server (RFC 1928)
- * ¶Ë¿Ú: 20032
- * ÓÃ»§Ãû: admin
- * ÃÜÂë: qwe123
+ * ç«¯å£: 20032
+ * ç”¨æˆ·å: admin
+ * å¯†ç : qwe123
  */
 
 const net = require('net');
 
-// --- ÅäÖÃ²ÎÊýÓ²±àÂë ---
+// --- é…ç½®å‚æ•°ç¡¬ç¼–ç  ---
 const PORT = 20032;
 const USERNAME = 'admin';
 const PASSWORD = 'qwe123';
 
 const server = net.createServer((clientSocket) => {
-    // ×´Ì¬¹ÜÀí£º0: ³õÊ¼, 1: ÈÏÖ¤, 2: ÇëÇó
+    // çŠ¶æ€ç®¡ç†ï¼š0: åˆå§‹, 1: è®¤è¯, 2: è¯·æ±‚
     let stage = 0;
 
     clientSocket.on('data', (data) => {
         if (stage === 0) {
-            // 1. ´¦Àí°æ±¾Ð­ÉÌ
+            // 1. å¤„ç†ç‰ˆæœ¬åå•†
             // data: [VERSION, NMETHODS, METHODS...]
             if (data[0] !== 0x05) return clientSocket.destroy();
 
-            // ¼ì²éÊÇ·ñÖ§³ÖÓÃ»§Ãû/ÃÜÂëÈÏÖ¤ (0x02)
+            // æ£€æŸ¥æ˜¯å¦æ”¯æŒç”¨æˆ·å/å¯†ç è®¤è¯ (0x02)
             const methods = data.slice(2);
             if (methods.includes(0x02)) {
-                clientSocket.write(Buffer.from([0x05, 0x02])); // Ñ¡ÔñÓÃ»§ÃûÃÜÂëÈÏÖ¤
+                clientSocket.write(Buffer.from([0x05, 0x02])); // é€‰æ‹©ç”¨æˆ·åå¯†ç è®¤è¯
                 stage = 1;
             } else {
-                // Èç¹û¿Í»§¶Ë²»Ö§³Ö¼ÓÃÜÈÏÖ¤£¬Ôò¾Ü¾ø
+                // å¦‚æžœå®¢æˆ·ç«¯ä¸æ”¯æŒåŠ å¯†è®¤è¯ï¼Œåˆ™æ‹’ç»
                 clientSocket.write(Buffer.from([0x05, 0xFF]));
                 return clientSocket.destroy();
             }
         } 
         else if (stage === 1) {
-            // 2. ´¦ÀíÓÃ»§ÃûÃÜÂëÐ£Ñé (Sub-negotiation)
+            // 2. å¤„ç†ç”¨æˆ·åå¯†ç æ ¡éªŒ (Sub-negotiation)
             // data: [VER, ULEN, USERNAME, PLEN, PASSWORD]
             const ulen = data[1];
             const user = data.slice(2, 2 + ulen).toString();
@@ -42,19 +42,19 @@ const server = net.createServer((clientSocket) => {
             const pass = data.slice(3 + ulen, 3 + ulen + plen).toString();
 
             if (user === USERNAME && pass === PASSWORD) {
-                clientSocket.write(Buffer.from([0x01, 0x00])); // ÈÏÖ¤³É¹¦
+                clientSocket.write(Buffer.from([0x01, 0x00])); // è®¤è¯æˆåŠŸ
                 stage = 2;
             } else {
-                clientSocket.write(Buffer.from([0x01, 0x01])); // ÈÏÖ¤Ê§°Ü
+                clientSocket.write(Buffer.from([0x01, 0x01])); // è®¤è¯å¤±è´¥
                 return clientSocket.destroy();
             }
         } 
         else if (stage === 2) {
-            // 3. ´¦ÀíÁ¬½ÓÇëÇó
+            // 3. å¤„ç†è¿žæŽ¥è¯·æ±‚
             // data: [VER, CMD, RSV, ATYP, ADDR, PORT]
             const cmd = data[1];
-            if (cmd !== 0x01) { // ½öÖ§³Ö CONNECT (0x01)
-                clientSocket.write(Buffer.from([0x05, 0x07])); // ²»Ö§³ÖµÄÃüÁî
+            if (cmd !== 0x01) { // ä»…æ”¯æŒ CONNECT (0x01)
+                clientSocket.write(Buffer.from([0x05, 0x07])); // ä¸æ”¯æŒçš„å‘½ä»¤
                 return clientSocket.destroy();
             }
 
@@ -65,7 +65,7 @@ const server = net.createServer((clientSocket) => {
             if (atyp === 0x01) { // IPv4
                 host = data.slice(4, 8).join('.');
                 offset = 8;
-            } else if (atyp === 0x03) { // ÓòÃû
+            } else if (atyp === 0x03) { // åŸŸå
                 const addrLen = data[4];
                 host = data.slice(5, 5 + addrLen).toString();
                 offset = 5 + addrLen;
@@ -78,13 +78,13 @@ const server = net.createServer((clientSocket) => {
 
             const port = data.readUInt16BE(offset);
 
-            // 4. ½¨Á¢ÓëÄ¿±êµÄÁ¬½Ó
+            // 4. å»ºç«‹ä¸Žç›®æ ‡çš„è¿žæŽ¥
             const remoteSocket = net.connect(port, host, () => {
-                // Á¬½Ó³É¹¦£¬ÏìÓ¦¿Í»§¶Ë
+                // è¿žæŽ¥æˆåŠŸï¼Œå“åº”å®¢æˆ·ç«¯
                 const resp = Buffer.from([0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0]);
                 clientSocket.write(resp);
 
-                // Ë«ÏòÊý¾Ý×ª·¢
+                // åŒå‘æ•°æ®è½¬å‘
                 clientSocket.pipe(remoteSocket);
                 remoteSocket.pipe(clientSocket);
             });
@@ -94,18 +94,18 @@ const server = net.createServer((clientSocket) => {
                 clientSocket.destroy();
             });
 
-            // ÒÆ³ý data ¼àÌý£¬½»¸ø pipe ´¦ÀíºóÐøÁ÷Á¿
+            // ç§»é™¤ data ç›‘å¬ï¼Œäº¤ç»™ pipe å¤„ç†åŽç»­æµé‡
             clientSocket.removeAllListeners('data');
         }
     });
 
     clientSocket.on('error', (err) => {
-        // ºöÂÔ³£¼ûµÄÁ¬½ÓÖØÖÃ´íÎó
+        // å¿½ç•¥å¸¸è§çš„è¿žæŽ¥é‡ç½®é”™è¯¯
     });
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`SOCKS5 ·þÎñ¶ËÒÑÆô¶¯`);
-    console.log(`¼àÌý¶Ë¿Ú: ${PORT}`);
-    console.log(`ÈÏÖ¤ÐÅÏ¢: ${USERNAME} / ${PASSWORD}`);
+    console.log(`SOCKS5 æœåŠ¡ç«¯å¯åŠ¨`);
+    console.log(`ç›‘å¬ç«¯å£: ${PORT}`);
+    console.log(`è®¤è¯ä¿¡æ¯: ${USERNAME} / ${PASSWORD}`);
 });
